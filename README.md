@@ -195,4 +195,4 @@ npm run dev
 
 ## License
 
-MIT
+APGL-3.0
