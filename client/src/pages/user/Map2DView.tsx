@@ -36,6 +36,7 @@ export default function Map2DView({
         <OrthographicCamera
           makeDefault
           position={[width / 2, 50, height / 2]}
+          rotation={[-Math.PI / 2, 0, 0]}
           zoom={1}
           left={-cameraSize}
           right={cameraSize}
