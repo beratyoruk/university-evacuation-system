@@ -1,6 +1,6 @@
-import { useMemo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, PerspectiveCamera, Grid, Text } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera, Grid, Text, Detailed } from "@react-three/drei";
 import * as THREE from "three";
 import UserMarker from "./UserMarker";
 import RouteVisualizer from "./RouteVisualizer";
@@ -154,8 +154,13 @@ function Walls({ walls }: { walls: Wall[] }) {
   );
 }
 
-/** Room polygon extruded to a thin slab with floating label. */
-function RoomMesh({ room }: { room: Room }) {
+/**
+ * Room polygon extruded to a thin slab with floating label.
+ *
+ * Uses drei's <Detailed> for distance-based LOD: near the camera we render
+ * the full label (SDF text is expensive); past ~40 units the label is dropped.
+ */
+const RoomMesh = memo(function RoomMesh({ room }: { room: Room }) {
   const { shape, center } = useMemo(() => {
     const s = new THREE.Shape();
     if (room.polygon.length === 0) return { shape: s, center: { x: 0, y: 0 } };
@@ -166,7 +171,6 @@ function RoomMesh({ room }: { room: Room }) {
     }
     s.closePath();
 
-    // Calculate centroid for label placement
     const cx = room.polygon.reduce((sum, p) => sum + p.x, 0) / room.polygon.length;
     const cy = room.polygon.reduce((sum, p) => sum + p.y, 0) / room.polygon.length;
 
@@ -175,42 +179,38 @@ function RoomMesh({ room }: { room: Room }) {
 
   const color = ROOM_COLORS[room.type] || ROOM_COLORS.default;
 
-  return (
-    <group>
-      {/* Room floor slab */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, ROOM_HEIGHT / 2, 0]} receiveShadow>
-        <extrudeGeometry
-          args={[
-            shape,
-            { depth: ROOM_HEIGHT, bevelEnabled: false },
-          ]}
-        />
-        <meshStandardMaterial
-          color={color}
-          transparent
-          opacity={0.35}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Room label floating above */}
-      <Text
-        position={[center.x * SCALE, WALL_HEIGHT + 0.5, center.y * SCALE]}
-        fontSize={0.6}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.04}
-        outlineColor="#000000"
-      >
-        {room.name}
-      </Text>
-    </group>
+  const slab = (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, ROOM_HEIGHT / 2, 0]} receiveShadow>
+      <extrudeGeometry args={[shape, { depth: ROOM_HEIGHT, bevelEnabled: false }]} />
+      <meshStandardMaterial color={color} transparent opacity={0.35} side={THREE.DoubleSide} />
+    </mesh>
   );
-}
+
+  return (
+    <Detailed distances={[0, 40]}>
+      {/* Near: slab + label */}
+      <group>
+        {slab}
+        <Text
+          position={[center.x * SCALE, WALL_HEIGHT + 0.5, center.y * SCALE]}
+          fontSize={0.6}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.04}
+          outlineColor="#000000"
+        >
+          {room.name}
+        </Text>
+      </group>
+      {/* Far: slab only — drop the SDF text mesh */}
+      <group>{slab}</group>
+    </Detailed>
+  );
+});
 
 /** Exit marker: green glowing sphere for emergency exits, blue for normal. */
-function ExitMesh({
+const ExitMesh = memo(function ExitMesh({
   exit,
   emergencyMode,
 }: {
@@ -270,7 +270,7 @@ function ExitMesh({
       )}
     </group>
   );
-}
+});
 
 /** Ground plane with grid overlay. */
 function Floor({ width, height }: { width: number; height: number }) {
@@ -345,7 +345,7 @@ function Lighting({ emergencyMode }: { emergencyMode: boolean }) {
  * @param width          - Floor plan width in meters (default 50)
  * @param height         - Floor plan height in meters (default 50)
  */
-export default function FloorViewer({
+function FloorViewer({
   planData,
   route,
   userPosition,
@@ -413,3 +413,5 @@ export default function FloorViewer({
     </div>
   );
 }
+
+export default memo(FloorViewer);

@@ -1,6 +1,7 @@
 import express from "express";
 import http from "http";
 import path from "path";
+import compression from "compression";
 import { Server as SocketIOServer } from "socket.io";
 import { config } from "./config";
 import { pool } from "./db/db";
@@ -47,6 +48,10 @@ app.set("trust proxy", 1);
 // ─── Security middleware ───
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
+
+// ─── Response compression ───
+// Shrinks JSON payloads (floor plans, waypoint graphs) over the wire.
+app.use(compression({ threshold: 1024 }));
 
 // ─── Body parsing ───
 app.use(express.json({ limit: "1mb" }));

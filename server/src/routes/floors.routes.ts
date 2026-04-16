@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { query } from "../db/db";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { planUpload } from "../middleware/upload";
+import { cacheGet, cacheSet, cacheDel, cacheKeys } from "../db/cache";
 
 const router = Router();
 
@@ -11,6 +12,13 @@ const router = Router();
  */
 router.get("/:buildingId", authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    const key = cacheKeys.floorsList(String(req.params.buildingId));
+    const cached = await cacheGet<unknown[]>(key);
+    if (cached) {
+      res.json({ success: true, data: cached, cached: true });
+      return;
+    }
+
     const result = await query(
       `SELECT id, building_id, floor_number, floor_name, plan_image_url, plan_json
        FROM floors
@@ -19,6 +27,7 @@ router.get("/:buildingId", authenticate, async (req: AuthRequest, res: Response)
       [req.params.buildingId]
     );
 
+    await cacheSet(key, result.rows);
     res.json({ success: true, data: result.rows });
   } catch (err) {
     console.error("[floors] list error:", err);
@@ -32,6 +41,13 @@ router.get("/:buildingId", authenticate, async (req: AuthRequest, res: Response)
  */
 router.get("/detail/:id", authenticate, async (req: AuthRequest, res: Response) => {
   try {
+    const key = cacheKeys.floorDetail(String(req.params.id));
+    const cached = await cacheGet<unknown>(key);
+    if (cached) {
+      res.json({ success: true, data: cached, cached: true });
+      return;
+    }
+
     const floorResult = await query(
       `SELECT id, building_id, floor_number, floor_name, plan_image_url, plan_json
        FROM floors WHERE id = $1`,
@@ -48,14 +64,14 @@ router.get("/detail/:id", authenticate, async (req: AuthRequest, res: Response) 
       query("SELECT id, x, y, connections FROM waypoints WHERE floor_id = $1", [req.params.id]),
     ]);
 
-    res.json({
-      success: true,
-      data: {
-        ...floorResult.rows[0],
-        exits: exitsResult.rows,
-        waypoints: waypointsResult.rows,
-      },
-    });
+    const payload = {
+      ...floorResult.rows[0],
+      exits: exitsResult.rows,
+      waypoints: waypointsResult.rows,
+    };
+
+    await cacheSet(key, payload);
+    res.json({ success: true, data: payload });
   } catch (err) {
     console.error("[floors] detail error:", err);
     res.status(500).json({ success: false, error: "Failed to fetch floor details" });
@@ -83,6 +99,7 @@ router.post("/", authenticate, authorize("admin"), async (req: AuthRequest, res:
       [building_id, floor_number, floor_name, plan_json ? JSON.stringify(plan_json) : null]
     );
 
+    await cacheDel(cacheKeys.floorsList(String(building_id)));
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (err) {
     console.error("[floors] create error:", err);
@@ -121,6 +138,8 @@ router.post(
         return;
       }
 
+      await cacheDel(cacheKeys.floorDetail(String(req.params.id)));
+      await cacheDel(cacheKeys.floorsList(String(result.rows[0].building_id)));
       res.json({ success: true, data: result.rows[0] });
     } catch (err) {
       console.error("[floors] upload-plan error:", err);

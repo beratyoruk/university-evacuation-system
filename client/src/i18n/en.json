@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "Evacuation Guide",
+    "brand": "University Evacuation System"
+  },
+  "common": {
+    "loading": "Loading",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "open": "Open",
+    "save": "Save",
+    "delete": "Delete"
+  },
+  "evacuation": {
+    "startedToast": "Emergency started — guidance active",
+    "endedToast": "Emergency ended",
+    "banner": "Emergency Evacuation",
+    "routeUpdated": "Route updated",
+    "arrived": "You have reached the exit",
+    "triggerManual": "Start emergency",
+    "triggeredManualToast": "Emergency mode started manually",
+    "viewerLoading": "Loading viewer",
+    "planLoading": "Loading floor plan"
+  },
+  "location": {
+    "unknown": "Location unknown",
+    "detecting": "Detecting location…",
+    "gpsLocked": "GPS signal acquired",
+    "gpsWaiting": "Waiting for location",
+    "yours": "Your location",
+    "buildingsLoadFailed": "Failed to load buildings",
+    "floorsLoadFailed": "Failed to load floors"
+  },
+  "exit": {
+    "distance": "Distance to exit",
+    "eta": "Estimated time",
+    "nearest": "Nearest exit",
+    "seconds": "s",
+    "minutes": "min"
+  },
+  "floor": {
+    "empty": "No floor available to display",
+    "label": "Floor {{number}}"
+  },
+  "view": {
+    "selectAria": "View selection",
+    "3d": "3D",
+    "2d": "2D"
+  },
+  "panel": {
+    "infoAria": "Evacuation information",
+    "togglerOpen": "Open panel",
+    "togglerClose": "Close panel"
+  }
+}

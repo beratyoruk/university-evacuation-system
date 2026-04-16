@@ -6,6 +6,7 @@ import { findEvacuationRoute } from "../services/pathfinding.service";
 import { locationLimiter } from "../middleware/rateLimit";
 import { validate } from "../middleware/validate";
 import { locationUpdateSchema, routeQuerySchema } from "../schemas";
+import { cacheGet, cacheSet, cacheKeys } from "../db/cache";
 
 const router = Router();
 
@@ -84,6 +85,14 @@ router.get("/route", authenticate, validate(routeQuerySchema, "query"), async (r
 
     const blockedIds = blockedParam ? blockedParam.split(",").map((s) => s.trim()) : [];
 
+    // Check cache first — routes are deterministic for (floor, start pos, blocked set).
+    const cacheKey = cacheKeys.route(floorId, x, y, blockedIds.slice().sort().join(","));
+    const cachedRoute = await cacheGet<unknown>(cacheKey);
+    if (cachedRoute) {
+      res.json({ success: true, data: cachedRoute, cached: true });
+      return;
+    }
+
     // Fetch all waypoints and exits for this floor
     const [waypointsResult, exitsResult] = await Promise.all([
       query("SELECT id, x, y, connections FROM waypoints WHERE floor_id = $1", [floorId]),
@@ -131,6 +140,7 @@ router.get("/route", authenticate, validate(routeQuerySchema, "query"), async (r
       });
     }
 
+    await cacheSet(cacheKey, route);
     res.json({ success: true, data: route });
   } catch (err) {
     console.error("[location] route error:", err);

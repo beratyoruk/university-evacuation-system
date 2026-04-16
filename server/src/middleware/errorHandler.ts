@@ -26,8 +26,8 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     return;
   }
 
-  // JSON parse errors
-  if (err.type === "entity.parse.failed") {
+  // JSON parse errors — body-parser tags these with a `type` property
+  if ((err as Error & { type?: string }).type === "entity.parse.failed") {
     res.status(400).json({ success: false, error: "Invalid JSON in request body" });
     return;
   }

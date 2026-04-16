@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "Tahliye Yönlendirme",
+    "brand": "Üniversite Tahliye Sistemi"
+  },
+  "common": {
+    "loading": "Yükleniyor",
+    "error": "Bir hata oluştu",
+    "retry": "Tekrar dene",
+    "cancel": "İptal",
+    "confirm": "Onayla",
+    "close": "Kapat",
+    "open": "Aç",
+    "save": "Kaydet",
+    "delete": "Sil"
+  },
+  "evacuation": {
+    "startedToast": "Acil durum başladı — yönlendirme aktif",
+    "endedToast": "Acil durum sona erdi",
+    "banner": "Acil Tahliye",
+    "routeUpdated": "Rota güncellendi",
+    "arrived": "Çıkışa ulaştınız",
+    "triggerManual": "Acil durum başlat",
+    "triggeredManualToast": "Acil durum modu manuel olarak başlatıldı",
+    "viewerLoading": "Görüntüleyici yükleniyor",
+    "planLoading": "Kat planı yükleniyor"
+  },
+  "location": {
+    "unknown": "Konum bilinmiyor",
+    "detecting": "Konum tespit ediliyor…",
+    "gpsLocked": "GPS sinyali alındı",
+    "gpsWaiting": "Konum bekleniyor",
+    "yours": "Konumunuz",
+    "buildingsLoadFailed": "Binalar yüklenemedi",
+    "floorsLoadFailed": "Katlar yüklenemedi"
+  },
+  "exit": {
+    "distance": "Çıkışa Mesafe",
+    "eta": "Tahmini Süre",
+    "nearest": "En Yakın Çıkış",
+    "seconds": "sn",
+    "minutes": "dk"
+  },
+  "floor": {
+    "empty": "Görüntülenecek kat bulunamadı",
+    "label": "{{number}}. Kat"
+  },
+  "view": {
+    "selectAria": "Görünüm seçimi",
+    "3d": "3D",
+    "2d": "2D"
+  },
+  "panel": {
+    "infoAria": "Tahliye bilgileri",
+    "togglerOpen": "Paneli aç",
+    "togglerClose": "Paneli kapat"
+  }
+}

@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { io } from "socket.io-client";
-import FloorViewer from "../../components/FloorViewer/FloorViewer";
 import FloorSelector from "../../components/FloorViewer/FloorSelector";
-import Map2DView from "./Map2DView";
 import NavigationPanel from "./NavigationPanel";
 import EmergencyAlert from "./EmergencyAlert";
 import LoadingSpinner from "../../components/UI/LoadingSpinner";
+
+// Three.js + R3F weigh ~400KB gzipped. Lazy-splitting them off the main bundle
+// lets the initial paint happen without waiting for the 3D engine to load.
+const FloorViewer = lazy(() => import("../../components/FloorViewer/FloorViewer"));
+const Map2DView = lazy(() => import("./Map2DView"));
 import DistanceBadge from "../../components/UI/DistanceBadge";
 import ExitCard from "../../components/UI/ExitCard";
 import { toast } from "../../components/UI/Toast";
@@ -308,25 +311,34 @@ export default function EvacuationView() {
             </div>
           )}
 
-          {currentFloor && viewMode === "3d" && (
-            <FloorViewer
-              planData={planData}
-              route={evacuationRoute}
-              userPosition={userPos}
-              emergencyMode={emergencyMode}
-              width={currentFloor.width}
-              height={currentFloor.height}
-            />
-          )}
-          {currentFloor && viewMode === "2d" && (
-            <Map2DView
-              planData={planData}
-              route={evacuationRoute}
-              userPosition={userPos}
-              width={currentFloor.width}
-              height={currentFloor.height}
-              emergencyMode={emergencyMode}
-            />
+          {currentFloor && (
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center">
+                  <LoadingSpinner size="lg" label="Görüntüleyici yükleniyor" />
+                </div>
+              }
+            >
+              {viewMode === "3d" ? (
+                <FloorViewer
+                  planData={planData}
+                  route={evacuationRoute}
+                  userPosition={userPos}
+                  emergencyMode={emergencyMode}
+                  width={currentFloor.width}
+                  height={currentFloor.height}
+                />
+              ) : (
+                <Map2DView
+                  planData={planData}
+                  route={evacuationRoute}
+                  userPosition={userPos}
+                  width={currentFloor.width}
+                  height={currentFloor.height}
+                  emergencyMode={emergencyMode}
+                />
+              )}
+            </Suspense>
           )}
           {!currentFloor && !planLoading && (
             <div className="flex h-full items-center justify-center px-6 text-center">

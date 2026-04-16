@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { query } from "../db/db";
 import { config } from "../config";
 import { authenticate, AuthRequest } from "../middleware/auth";
@@ -15,9 +15,10 @@ const SALT_ROUNDS = 12;
  * Generate a JWT token for the given user.
  */
 function signToken(userId: string, role: string, universityId: string | null): string {
-  return jwt.sign({ userId, role, universityId }, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn,
-  });
+  // jsonwebtoken 9 narrows `expiresIn` to number | ms-style string; our config
+  // stores it as `string`, so cast through SignOptions to keep the typings happy.
+  const options: SignOptions = { expiresIn: config.jwt.expiresIn as SignOptions["expiresIn"] };
+  return jwt.sign({ userId, role, universityId }, config.jwt.secret, options);
 }
 
 /**
