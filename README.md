@@ -96,6 +96,12 @@ cd server && npx ts-node --transpile-only \
   ../scripts/generate-sample-plan.ts ../sample-plan.json
 ```
 
+A ready-made sample is also checked in: **`scripts/sample-floor-plan.json`** — a
+mid-size university floor (10 rooms incl. 6 classrooms, teachers' office, WCs,
+two emergency exits, two staircases) with a corridor waypoint graph. A copy is
+served at **`/sample-plan.json`** by the client dev server, so you can drag it
+straight into the Floor Plan editor (Admin → Floor Plans).
+
 ### Load testing
 
 ```bash
