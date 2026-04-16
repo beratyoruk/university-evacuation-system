@@ -39,10 +39,10 @@ export interface PlanJSON {
 
 export const floorsApi = {
   listByBuilding: (buildingId: string) =>
-    client.get<{ data: Floor[] }>(`/buildings/${buildingId}/floors`),
+    client.get<{ data: Floor[] }>(`/floors/${buildingId}`),
 
   get: (id: string) =>
-    client.get<{ data: Floor }>(`/floors/${id}`),
+    client.get<{ data: Floor }>(`/floors/detail/${id}`),
 
   create: (data: FloorPayload) =>
     client.post<{ data: Floor }>("/floors", data),
@@ -62,7 +62,7 @@ export const floorsApi = {
   uploadImage: (floorId: string, file: File) => {
     const form = new FormData();
     form.append("plan", file);
-    return client.post(`/floors/${floorId}/upload`, form, {
+    return client.post(`/floors/${floorId}/upload-plan`, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },

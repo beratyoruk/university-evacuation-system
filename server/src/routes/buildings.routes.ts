@@ -10,11 +10,15 @@ const router = Router();
  * GET /api/buildings
  * List all buildings. Optionally filter by ?university_id=...
  */
-router.get("/", authenticate, async (req: AuthRequest, res: Response) => {
+router.get("/", async (req: AuthRequest, res: Response) => {
   try {
     const universityId = req.query.university_id as string | undefined;
 
-    let sql = `SELECT id, university_id, name, address, lat, lng, floors_count FROM buildings`;
+    let sql = `SELECT id, university_id, name, address,
+                      lat  AS latitude,
+                      lng  AS longitude,
+                      floors_count AS "totalFloors"
+               FROM buildings`;
     const params: unknown[] = [];
 
     if (universityId) {
@@ -36,10 +40,13 @@ router.get("/", authenticate, async (req: AuthRequest, res: Response) => {
  * GET /api/buildings/:id
  * Get a single building by ID, including its floors.
  */
-router.get("/:id", authenticate, async (req: AuthRequest, res: Response) => {
+router.get("/:id", async (req: AuthRequest, res: Response) => {
   try {
     const buildingResult = await query(
-      `SELECT id, university_id, name, address, lat, lng, floors_count
+      `SELECT id, university_id, name, address,
+              lat  AS latitude,
+              lng  AS longitude,
+              floors_count AS "totalFloors"
        FROM buildings WHERE id = $1`,
       [req.params.id]
     );
@@ -50,7 +57,11 @@ router.get("/:id", authenticate, async (req: AuthRequest, res: Response) => {
     }
 
     const floorsResult = await query(
-      `SELECT id, floor_number, floor_name, plan_image_url
+      `SELECT id,
+              building_id     AS "buildingId",
+              floor_number    AS "floorNumber",
+              floor_name      AS name,
+              plan_image_url  AS "planUrl"
        FROM floors WHERE building_id = $1 ORDER BY floor_number`,
       [req.params.id]
     );

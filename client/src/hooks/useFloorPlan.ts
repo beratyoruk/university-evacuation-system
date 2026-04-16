@@ -18,7 +18,7 @@ export function useFloorPlan(floorId: string | null) {
   const cachedPlan = floorId ? floorPlans[floorId] ?? null : null;
 
   useEffect(() => {
-    if (!floorId || cachedPlan) return;
+    if (!floorId) return;
 
     const currentFloorId = floorId;
     let cancelled = false;

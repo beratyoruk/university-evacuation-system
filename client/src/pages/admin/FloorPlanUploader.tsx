@@ -112,13 +112,18 @@ export default function FloorPlanUploader() {
   };
 
   const handleSave = async () => {
-    if (!selectedFloor) return;
+    if (!selectedFloor || !selectedBuilding) return;
     setSaving(true);
     setMessage(null);
     try {
       const planJson = exportToPlanJson(walls, exits, rooms, SCALE);
       await floorsApi.savePlan(selectedFloor, planJson);
-      setMessage({ type: "success", text: "Floor plan saved" });
+      const fresh = await floorsApi.listByBuilding(selectedBuilding);
+      setFloors(fresh.data.data || []);
+      setMessage({
+        type: "success",
+        text: `Floor plan saved — ${walls.length} walls, ${rooms.length} rooms, ${exits.length} exits`,
+      });
     } catch {
       setMessage({ type: "error", text: "Failed to save floor plan" });
     } finally {

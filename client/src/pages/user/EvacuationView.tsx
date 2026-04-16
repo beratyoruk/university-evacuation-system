@@ -59,6 +59,15 @@ export default function EvacuationView() {
 
   const { planData, loading: planLoading } = useFloorPlan(currentFloor?.id ?? null);
 
+  if (import.meta.env.DEV && planData) {
+    console.debug("[EvacuationView] plan loaded:", {
+      floorId: currentFloor?.id,
+      walls: planData.walls?.length ?? 0,
+      rooms: planData.rooms?.length ?? 0,
+      exits: planData.exits?.length ?? 0,
+    });
+  }
+
   // Fetch buildings list once
   useEffect(() => {
     buildingsApi.list()
