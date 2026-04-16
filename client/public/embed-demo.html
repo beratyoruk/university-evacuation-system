@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Embed Widget Demo — Tahliye Asistanı</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       color:#0f172a;background:#f1f5f9}
+  header{background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;padding:40px 20px}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px}
+  header h1{margin:0 0 8px;font-size:32px}
+  header p{margin:0;color:#cbd5e1;font-size:15px}
+  main{padding:40px 0}
+  section{background:#fff;border-radius:14px;padding:28px;margin-bottom:20px;
+          box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  h2{margin:0 0 12px;font-size:20px;color:#0f172a}
+  p{margin:0 0 12px;color:#475569}
+  pre{background:#0f172a;color:#e2e8f0;padding:14px 16px;border-radius:8px;
+      overflow-x:auto;font-size:13px;line-height:1.6}
+  code.inline{background:#f1f5f9;padding:2px 6px;border-radius:4px;
+              font-family:ui-monospace,monospace;font-size:.9em;color:#0f172a}
+  ul{margin:0 0 8px 18px;padding:0;color:#475569}
+  ul li{margin-bottom:4px}
+  .tag{display:inline-block;background:#10b981;color:#fff;font-size:11px;
+       font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.05em;
+       text-transform:uppercase;vertical-align:middle}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .controls button{background:#10b981;color:#fff;border:0;border-radius:8px;
+                   padding:10px 16px;font-weight:600;cursor:pointer;font:inherit}
+  .controls button:hover{background:#059669}
+  .controls button.ghost{background:#e2e8f0;color:#0f172a}
+  .controls button.ghost:hover{background:#cbd5e1}
+  footer{padding:30px 0;text-align:center;color:#64748b;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Tahliye Asistanı Widget Demosu <span class="tag">Demo</span></h1>
+    <p>Bu sayfa, üniversite sitelerine tek satırda eklenebilen tahliye widget'ını gösterir. Sağ alt köşedeki yeşil butona tıklayın.</p>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section>
+      <h2>Nasıl Çalışır?</h2>
+      <p>Widget, herhangi bir HTML sayfasına tek satır script etiketi ile eklenir. Sayfa yüklendiğinde sağ alt köşeye yeşil <code class="inline">🚪 Tahliye</code> butonu yerleştirir. Ziyaretçi butona tıkladığında, tahliye asistanı tam ekran iframe olarak açılır.</p>
+    </section>
+
+    <section>
+      <h2>Entegrasyon Kodu</h2>
+      <p><code class="inline">&lt;/body&gt;</code> etiketinden hemen önce şu satırı ekleyin:</p>
+<pre>&lt;script src="https://your.domain.com/widget.js"
+        data-university="itu"
+        data-building="main"
+        data-color="#16a34a"
+        data-position="bottom-right"&gt;&lt;/script&gt;</pre>
+    </section>
+
+    <section>
+      <h2>Parametreler</h2>
+      <ul>
+        <li><code class="inline">data-university</code> — Üniversite slug'ı (gerekli)</li>
+        <li><code class="inline">data-building</code> — Varsayılan bina (opsiyonel)</li>
+        <li><code class="inline">data-host</code> — Sunucu URL'i (opsiyonel; script URL'inden çıkarılır)</li>
+        <li><code class="inline">data-color</code> — Buton arka plan rengi</li>
+        <li><code class="inline">data-text-color</code> — Buton yazı rengi</li>
+        <li><code class="inline">data-label</code> — Buton metni (varsayılan: 🚪 Tahliye)</li>
+        <li><code class="inline">data-position</code> — <code class="inline">bottom-right</code> / <code class="inline">bottom-left</code> / <code class="inline">top-right</code> / <code class="inline">top-left</code></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>JavaScript API</h2>
+      <p>Widget yüklendikten sonra <code class="inline">window.UEWidget</code> üzerinden programatik olarak kontrol edilebilir:</p>
+      <pre>UEWidget.open();   // modalı aç
+UEWidget.close();  // modalı kapat
+UEWidget.config(); // yapılandırmayı döndür</pre>
+      <div class="controls">
+        <button onclick="window.UEWidget && window.UEWidget.open()">Modal'ı Programatik Aç</button>
+        <button class="ghost" onclick="window.UEWidget && window.UEWidget.close()">Kapat</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Olay Dinleme</h2>
+      <p>Sayfa, <code class="inline">ue:emergency</code> CustomEvent'ini dinleyerek acil durum bildirimlerini yakalayabilir:</p>
+      <pre>window.addEventListener("ue:emergency", (e) =&gt; {
+  console.log("Acil durum:", e.detail);
+});</pre>
+    </section>
+  </div>
+</main>
+
+<footer>© University Evacuation System — Embed Widget Demo</footer>
+
+<script>
+  window.addEventListener("ue:emergency", function (e) {
+    console.log("[demo] ue:emergency fired", e.detail);
+  });
+</script>
+
+<!-- ✨ Embed widget tek satır — bu sayfada kendi origin'inden yüklenir -->
+<script
+  src="/widget.js"
+  data-university="demo"
+  data-building="main"
+  data-color="#16a34a"
+  data-text-color="#ffffff"
+  data-label="🚪 Tahliye"
+  data-position="bottom-right"></script>
+</body>
+</html>

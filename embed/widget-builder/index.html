@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Widget Oluşturucu — Tahliye Sistemi</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       background:#020617;color:#e2e8f0;min-height:100vh}
+  .wrap{max-width:1100px;margin:0 auto;padding:32px 20px}
+  h1{margin:0 0 4px;font-size:26px;font-weight:700;color:#fff}
+  .sub{color:#94a3b8;margin-bottom:28px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:22px}
+  .card h2{margin:0 0 16px;font-size:15px;font-weight:600;color:#cbd5e1;
+           text-transform:uppercase;letter-spacing:.05em}
+  label{display:block;font-size:12px;font-weight:500;color:#94a3b8;
+        margin-bottom:6px;margin-top:14px}
+  input,select{width:100%;background:#020617;border:1px solid #1e293b;
+               border-radius:8px;padding:10px 12px;color:#e2e8f0;font:inherit}
+  input:focus,select:focus{outline:0;border-color:#10b981;
+                           box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .color-row{display:flex;gap:10px;align-items:center}
+  .color-row input[type=color]{width:46px;height:38px;padding:2px;cursor:pointer}
+  .code{position:relative;background:#020617;border:1px solid #1e293b;
+        border-radius:8px;padding:14px 16px;font:12px/1.5 ui-monospace,monospace;
+        color:#e2e8f0;word-break:break-all;white-space:pre-wrap;min-height:90px}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:#10b981;
+       color:#fff;border:0;border-radius:8px;padding:10px 16px;font-weight:600;
+       cursor:pointer;font:inherit}
+  .btn:hover{background:#059669}
+  .btn.secondary{background:#1e293b;color:#e2e8f0}
+  .btn.secondary:hover{background:#334155}
+  .toolbar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .preview-area{background:#f8fafc;border-radius:8px;height:320px;position:relative;
+                overflow:hidden;border:1px solid #1e293b}
+  .preview-label{position:absolute;top:12px;left:12px;background:#fff;
+                 color:#64748b;padding:4px 10px;border-radius:6px;font-size:11px;
+                 font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .hint{color:#64748b;font-size:12px;margin-top:8px}
+  .badge{display:inline-block;background:#10b981;color:#fff;font-size:10px;
+         font-weight:700;padding:2px 6px;border-radius:4px;
+         text-transform:uppercase;letter-spacing:.05em;vertical-align:middle}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+         background:#10b981;color:#fff;padding:10px 18px;border-radius:8px;
+         font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;
+         pointer-events:none;transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Widget Oluşturucu <span class="badge">Embed</span></h1>
+  <p class="sub">Üniversitenizin web sitesine tek satırla entegre edilebilen tahliye asistanı widget'ı oluşturun.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Konfigürasyon</h2>
+
+      <label for="host">Sunucu (Host URL)</label>
+      <input id="host" type="text" placeholder="https://evac.yourdomain.com" />
+
+      <div class="row">
+        <div>
+          <label for="university">Üniversite Slug</label>
+          <input id="university" type="text" placeholder="itu" />
+        </div>
+        <div>
+          <label for="building">Bina (opsiyonel)</label>
+          <input id="building" type="text" placeholder="main" />
+        </div>
+      </div>
+
+      <label for="label">Buton Metni</label>
+      <input id="label" type="text" value="🚪 Tahliye" />
+
+      <div class="row">
+        <div>
+          <label for="color">Buton Rengi</label>
+          <div class="color-row">
+            <input id="color" type="color" value="#16a34a" />
+            <input id="colorHex" type="text" value="#16a34a" />
+          </div>
+        </div>
+        <div>
+          <label for="textColor">Yazı Rengi</label>
+          <div class="color-row">
+            <input id="textColor" type="color" value="#ffffff" />
+            <input id="textColorHex" type="text" value="#ffffff" />
+          </div>
+        </div>
+      </div>
+
+      <label for="position">Konum</label>
+      <select id="position">
+        <option value="bottom-right">Sağ alt köşe</option>
+        <option value="bottom-left">Sol alt köşe</option>
+        <option value="top-right">Sağ üst köşe</option>
+        <option value="top-left">Sol üst köşe</option>
+      </select>
+
+      <h2 style="margin-top:24px">Entegrasyon Kodu</h2>
+      <div class="code" id="snippet"></div>
+      <div class="toolbar">
+        <button class="btn" id="copyBtn">📋 Kodu Kopyala</button>
+        <button class="btn secondary" id="previewBtn">🔄 Önizlemeyi Yenile</button>
+      </div>
+      <p class="hint">Kopyaladığınız kodu sitenizin <code>&lt;/body&gt;</code> etiketinden hemen önce yapıştırın.</p>
+    </div>
+
+    <div class="card">
+      <h2>Canlı Önizleme</h2>
+      <div class="preview-area" id="preview">
+        <span class="preview-label">Örnek Sayfa</span>
+      </div>
+      <p class="hint">Butona tıkladığınızda tahliye asistanı tam ekran açılır.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Kopyalandı!</div>
+
+<script>
+(function(){
+  var fields = ["host","university","building","label","color","textColor","position"];
+  var els = {};
+  fields.forEach(function(f){ els[f] = document.getElementById(f); });
+  els.colorHex = document.getElementById("colorHex");
+  els.textColorHex = document.getElementById("textColorHex");
+
+  els.host.value = location.origin;
+
+  function sync(a,b){
+    a.addEventListener("input", function(){ b.value = a.value; update(); });
+    b.addEventListener("input", function(){ a.value = b.value; update(); });
+  }
+  sync(els.color, els.colorHex);
+  sync(els.textColor, els.textColorHex);
+
+  fields.forEach(function(f){
+    els[f].addEventListener("input", update);
+    els[f].addEventListener("change", update);
+  });
+
+  function buildSnippet(){
+    var host = els.host.value.trim().replace(/\/+$/,"");
+    var attrs = [
+      'src="' + host + '/widget.js"',
+      'data-host="' + host + '"'
+    ];
+    if (els.university.value.trim()) attrs.push('data-university="' + els.university.value.trim() + '"');
+    if (els.building.value.trim()) attrs.push('data-building="' + els.building.value.trim() + '"');
+    if (els.label.value.trim())      attrs.push('data-label="' + els.label.value.trim() + '"');
+    if (els.color.value)             attrs.push('data-color="' + els.color.value + '"');
+    if (els.textColor.value)         attrs.push('data-text-color="' + els.textColor.value + '"');
+    if (els.position.value)          attrs.push('data-position="' + els.position.value + '"');
+    return '<script ' + attrs.join(" ") + '><\/script>';
+  }
+
+  function update(){
+    document.getElementById("snippet").textContent = buildSnippet();
+    refreshPreview();
+  }
+
+  function refreshPreview(){
+    var preview = document.getElementById("preview");
+    var existing = preview.querySelectorAll(".pv-btn");
+    existing.forEach(function(n){ n.remove(); });
+    var btn = document.createElement("button");
+    btn.className = "pv-btn";
+    btn.textContent = els.label.value || "🚪 Tahliye";
+    btn.style.cssText = [
+      "position:absolute",
+      (els.position.value.indexOf("top") === 0 ? "top:16px" : "bottom:16px"),
+      (els.position.value.indexOf("-left") > 0 ? "left:16px" : "right:16px"),
+      "padding:12px 18px",
+      "border:0",
+      "border-radius:999px",
+      "font:600 13px/1 system-ui,sans-serif",
+      "background:" + els.color.value,
+      "color:" + els.textColor.value,
+      "box-shadow:0 10px 25px rgba(0,0,0,.15)",
+      "cursor:pointer"
+    ].join(";");
+    preview.appendChild(btn);
+  }
+
+  document.getElementById("previewBtn").onclick = refreshPreview;
+
+  document.getElementById("copyBtn").onclick = function(){
+    var snippet = buildSnippet();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(snippet).then(showToast);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = snippet; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); showToast(); }
+      catch (e) { alert("Kopyalama başarısız"); }
+      document.body.removeChild(ta);
+    }
+  };
+
+  function showToast(){
+    var t = document.getElementById("toast");
+    t.classList.add("show");
+    setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+
+  update();
+})();
+</script>
+</body>
+</html>

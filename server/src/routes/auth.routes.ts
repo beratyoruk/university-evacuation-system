@@ -4,6 +4,9 @@ import jwt from "jsonwebtoken";
 import { query } from "../db/db";
 import { config } from "../config";
 import { authenticate, AuthRequest } from "../middleware/auth";
+import { authLimiter } from "../middleware/rateLimit";
+import { validate } from "../middleware/validate";
+import { loginSchema, registerSchema } from "../schemas";
 
 const router = Router();
 const SALT_ROUNDS = 12;
@@ -22,7 +25,7 @@ function signToken(userId: string, role: string, universityId: string | null): s
  * Register a new user account.
  * Body: { email, password, role?, university_id? }
  */
-router.post("/register", async (req: Request, res: Response) => {
+router.post("/register", authLimiter, validate(registerSchema), async (req: Request, res: Response) => {
   try {
     const { email, password, role, university_id } = req.body;
 
@@ -75,7 +78,7 @@ router.post("/register", async (req: Request, res: Response) => {
  * Authenticate with email and password.
  * Body: { email, password }
  */
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", authLimiter, validate(loginSchema), async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 

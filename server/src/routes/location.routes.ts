@@ -3,6 +3,9 @@ import { query } from "../db/db";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { findNearestWaypoint, normalizeCoordinates } from "../services/location.service";
 import { findEvacuationRoute } from "../services/pathfinding.service";
+import { locationLimiter } from "../middleware/rateLimit";
+import { validate } from "../middleware/validate";
+import { locationUpdateSchema, routeQuerySchema } from "../schemas";
 
 const router = Router();
 
@@ -12,7 +15,7 @@ const router = Router();
  * Body: { floor_id, x, y }
  * The server broadcasts the update via Socket.IO and stores the nearest waypoint.
  */
-router.post("/update", authenticate, async (req: AuthRequest, res: Response) => {
+router.post("/update", locationLimiter, authenticate, validate(locationUpdateSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { floor_id, x, y } = req.body;
 
@@ -67,7 +70,7 @@ router.post("/update", authenticate, async (req: AuthRequest, res: Response) => 
  * to the nearest emergency exit on the given floor.
  * Optional `blocked` query param: comma-separated waypoint IDs to exclude (blocked paths).
  */
-router.get("/route", authenticate, async (req: AuthRequest, res: Response) => {
+router.get("/route", authenticate, validate(routeQuerySchema, "query"), async (req: AuthRequest, res: Response) => {
   try {
     const floorId = req.query.floor_id as string;
     const x = parseFloat(req.query.x as string);

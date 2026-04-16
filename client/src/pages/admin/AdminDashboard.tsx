@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { to: "/admin/buildings", label: "Buildings", icon: BuildingIcon },
   { to: "/admin/floors", label: "Floor Plans", icon: FloorIcon },
   { to: "/admin/exits", label: "Exits", icon: ExitIcon },
+  { to: "/admin/widget", label: "Widget", icon: WidgetIcon },
 ];
 
 export default function AdminDashboard() {
@@ -138,6 +139,17 @@ function ExitIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-4 w-4">
       <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" />
+    </svg>
+  );
+}
+
+function WidgetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-4 w-4">
+      <rect x="3" y="3" width="8" height="8" rx="1.5" />
+      <rect x="13" y="3" width="8" height="8" rx="1.5" />
+      <rect x="3" y="13" width="8" height="8" rx="1.5" />
+      <rect x="13" y="13" width="8" height="8" rx="1.5" />
     </svg>
   );
 }

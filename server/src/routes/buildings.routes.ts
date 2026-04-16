@@ -1,6 +1,8 @@
 import { Router, Response } from "express";
 import { query } from "../db/db";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import { validate } from "../middleware/validate";
+import { buildingCreateSchema, buildingUpdateSchema } from "../schemas";
 
 const router = Router();
 
@@ -71,7 +73,7 @@ router.get("/:id", authenticate, async (req: AuthRequest, res: Response) => {
  * Create a new building. Admin only.
  * Body: { university_id, name, address?, lat?, lng?, floors_count? }
  */
-router.post("/", authenticate, authorize("admin"), async (req: AuthRequest, res: Response) => {
+router.post("/", authenticate, authorize("admin"), validate(buildingCreateSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { university_id, name, address, lat, lng, floors_count } = req.body;
 
@@ -99,7 +101,7 @@ router.post("/", authenticate, authorize("admin"), async (req: AuthRequest, res:
  * Update an existing building. Admin only.
  * Body: partial { name, address, lat, lng, floors_count }
  */
-router.put("/:id", authenticate, authorize("admin"), async (req: AuthRequest, res: Response) => {
+router.put("/:id", authenticate, authorize("admin"), validate(buildingUpdateSchema), async (req: AuthRequest, res: Response) => {
   try {
     const { name, address, lat, lng, floors_count } = req.body;
 

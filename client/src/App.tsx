@@ -8,6 +8,7 @@ import BuildingManager from "./pages/admin/BuildingManager";
 import FloorPlanUploader from "./pages/admin/FloorPlanUploader";
 import ExitEditor from "./pages/admin/ExitEditor";
 import WaypointEditor from "./pages/admin/WaypointEditor";
+import WidgetBuilder from "./pages/admin/WidgetBuilder";
 
 /**
  * App router.
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="floors" element={<FloorPlanUploader />} />
         <Route path="exits" element={<ExitEditor />} />
         <Route path="waypoints" element={<WaypointEditor />} />
+        <Route path="widget" element={<WidgetBuilder />} />
       </Route>
 
       {/* Fallback */}
