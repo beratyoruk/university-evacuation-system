@@ -21,13 +21,27 @@ export interface NearestBuildingResult {
   loading: boolean;
   error: string | null;
   retry: () => void;
+  setSimulatedPosition: (lat: number, lng: number) => void;
 }
 
 const NEARBY_THRESHOLD = 50;
 
-export function useNearestBuilding(): NearestBuildingResult {
-  const [gpsStatus, setGpsStatus] = useState<GpsStatus>("waiting");
-  const [geoState, setGeoState] = useState<GeoState | null>(null);
+interface UseNearestBuildingOptions {
+  overrideLat?: number;
+  overrideLng?: number;
+}
+
+export function useNearestBuilding(opts?: UseNearestBuildingOptions): NearestBuildingResult {
+  const hasOverride =
+    opts?.overrideLat !== undefined && opts?.overrideLng !== undefined &&
+    Number.isFinite(opts.overrideLat) && Number.isFinite(opts.overrideLng);
+
+  const [gpsStatus, setGpsStatus] = useState<GpsStatus>(hasOverride ? "active" : "waiting");
+  const [geoState, setGeoState] = useState<GeoState | null>(
+    hasOverride
+      ? { lat: opts!.overrideLat!, lng: opts!.overrideLng!, accuracy: 1, timestamp: Date.now() }
+      : null
+  );
   const [building, setBuilding] = useState<NearestBuildingResult["building"]>(null);
   const [floors, setFloors] = useState<NearestBuildingResult["floors"]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +50,15 @@ export function useNearestBuilding(): NearestBuildingResult {
   const lastFetchRef = useRef<string>("");
   const retryCounterRef = useRef(0);
 
+  const setSimulatedPosition = useCallback((lat: number, lng: number) => {
+    setGpsStatus("active");
+    setGeoState({ lat, lng, accuracy: 1, timestamp: Date.now() });
+    lastFetchRef.current = "";
+  }, []);
+
   const startWatch = useCallback(() => {
+    if (hasOverride) return;
+
     if (!("geolocation" in navigator)) {
       setGpsStatus("unavailable");
       setLoading(false);
@@ -81,7 +103,7 @@ export function useNearestBuilding(): NearestBuildingResult {
         timeout: 10_000,
       }
     );
-  }, []);
+  }, [hasOverride]);
 
   useEffect(() => {
     startWatch();
@@ -146,7 +168,7 @@ export function useNearestBuilding(): NearestBuildingResult {
     startWatch();
   }, [startWatch]);
 
-  return { gpsStatus, geoState, building, floors, loading, error, retry };
+  return { gpsStatus, geoState, building, floors, loading, error, retry, setSimulatedPosition };
 }
 
 export { NEARBY_THRESHOLD };

@@ -29,6 +29,11 @@ export default function EvacuationView() {
   const [searchParams] = useSearchParams();
   const buildingParam = searchParams.get("building");
   const floorParam = searchParams.get("floor");
+  const latParam = searchParams.get("lat");
+  const lngParam = searchParams.get("lng");
+
+  const overrideLat = latParam ? parseFloat(latParam) : undefined;
+  const overrideLng = lngParam ? parseFloat(lngParam) : undefined;
 
   const [manualMode, setManualMode] = useState(false);
   const [allBuildings, setAllBuildings] = useState<Building[]>([]);
@@ -59,7 +64,8 @@ export default function EvacuationView() {
     loading: gpsLoading,
     error: gpsError,
     retry: retryGps,
-  } = useNearestBuilding();
+    setSimulatedPosition,
+  } = useNearestBuilding({ overrideLat, overrideLng });
 
   // ─── Auto-select building from GPS ───
   useEffect(() => {
@@ -463,6 +469,11 @@ export default function EvacuationView() {
           {/* GPS indicator (top-left) */}
           <GpsIndicator geoState={geoState} gpsStatus={gpsStatus} />
 
+          {/* Dev: location simulator */}
+          {import.meta.env.DEV && (
+            <DevLocationSimulator onSimulate={setSimulatedPosition} />
+          )}
+
           {/* Building name badge (top-right) */}
           {building && (
             <div className="absolute right-3 top-3 z-20 rounded-lg bg-gray-900/80 px-3 py-1.5 text-xs font-medium text-emerald-400 backdrop-blur-sm">
@@ -661,6 +672,77 @@ function GpsIndicator({ geoState, gpsStatus }: { geoState: GeoState | null; gpsS
       <span className="text-xs text-gray-500">
         ±{Math.round(geoState.accuracy)}m
       </span>
+    </div>
+  );
+}
+
+function DevLocationSimulator({ onSimulate }: { onSimulate: (lat: number, lng: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const [lat, setLat] = useState("41.1965");
+  const [lng, setLng] = useState("32.6347");
+
+  const presets = [
+    { label: "Kâmil Güleç Kütüphanesi", lat: 41.1965, lng: 32.6347 },
+    { label: "ITU Bilgisayar Fakültesi", lat: 41.1055, lng: 29.0232 },
+    { label: "ITU Merkez Kütüphane", lat: 41.1048, lng: 29.0225 },
+    { label: "50m uzakta (test)", lat: 41.1969, lng: 32.6347 },
+  ];
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="absolute left-3 bottom-20 z-30 rounded-lg bg-violet-700/80 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-violet-600"
+      >
+        Konum Simüle Et
+      </button>
+    );
+  }
+
+  return (
+    <div className="absolute left-3 bottom-20 z-30 w-72 rounded-xl border border-violet-500/40 bg-gray-900/95 p-3 backdrop-blur-md">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-xs font-bold text-violet-300">Konum Simülatörü (DEV)</span>
+        <button onClick={() => setOpen(false)} className="text-xs text-gray-400 hover:text-white">X</button>
+      </div>
+
+      <div className="mb-2 space-y-1">
+        {presets.map((p) => (
+          <button
+            key={p.label}
+            onClick={() => {
+              setLat(String(p.lat));
+              setLng(String(p.lng));
+              onSimulate(p.lat, p.lng);
+            }}
+            className="block w-full rounded-lg bg-gray-800 px-2 py-1.5 text-left text-xs text-gray-300 transition hover:bg-violet-800/50 hover:text-white"
+          >
+            {p.label}
+            <span className="ml-1 text-gray-500">({p.lat}, {p.lng})</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          value={lat}
+          onChange={(e) => setLat(e.target.value)}
+          placeholder="Lat"
+          className="w-0 flex-1 rounded-lg bg-gray-800 px-2 py-1 text-xs text-white placeholder-gray-500"
+        />
+        <input
+          value={lng}
+          onChange={(e) => setLng(e.target.value)}
+          placeholder="Lng"
+          className="w-0 flex-1 rounded-lg bg-gray-800 px-2 py-1 text-xs text-white placeholder-gray-500"
+        />
+        <button
+          onClick={() => onSimulate(parseFloat(lat), parseFloat(lng))}
+          className="rounded-lg bg-violet-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-violet-500"
+        >
+          Git
+        </button>
+      </div>
     </div>
   );
 }
