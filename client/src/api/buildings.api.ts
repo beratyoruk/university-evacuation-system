@@ -11,6 +11,22 @@ export interface Building {
   updatedAt: string;
 }
 
+export interface NearestBuildingResponse {
+  data: (Building & {
+    distance: number;
+    floors: Array<{
+      id: string;
+      buildingId: string;
+      floorNumber: number;
+      name: string;
+      planUrl: string | null;
+      planJson: unknown;
+    }>;
+  }) | null;
+  reason?: string;
+  nearestDistance?: number | null;
+}
+
 export interface BuildingPayload {
   name: string;
   address: string;
@@ -25,6 +41,9 @@ export const buildingsApi = {
 
   get: (id: string) =>
     client.get<{ data: Building }>(`/buildings/${id}`),
+
+  nearest: (lat: number, lng: number, radius = 500) =>
+    client.get<NearestBuildingResponse>(`/buildings/nearest?lat=${lat}&lng=${lng}&radius=${radius}`),
 
   create: (data: BuildingPayload) =>
     client.post<{ data: Building }>("/buildings", data),

@@ -1,0 +1,76 @@
+{
+  "width": 60,
+  "height": 30,
+  "scale": 1,
+  "building": {
+    "name": "Kâmil Güleç Kütüphanesi",
+    "university": "Karabük Üniversitesi",
+    "lat": 41.1965,
+    "lng": 32.6347,
+    "address": "Karabük Üniversitesi Merkez Kampüsü, 78050 Karabük"
+  },
+  "walls": [
+    {"x1": 0,  "y1": 0,  "x2": 60, "y2": 0},
+    {"x1": 0,  "y1": 30, "x2": 60, "y2": 30},
+    {"x1": 0,  "y1": 0,  "x2": 0,  "y2": 30},
+    {"x1": 60, "y1": 0,  "x2": 60, "y2": 30},
+
+    {"x1": 10, "y1": 0,  "x2": 10, "y2": 7},
+    {"x1": 25, "y1": 0,  "x2": 25, "y2": 7},
+    {"x1": 40, "y1": 0,  "x2": 40, "y2": 7},
+    {"x1": 50, "y1": 0,  "x2": 50, "y2": 7},
+
+    {"x1": 0,  "y1": 7,  "x2": 60, "y2": 7},
+    {"x1": 0,  "y1": 9,  "x2": 60, "y2": 9},
+
+    {"x1": 30, "y1": 9,  "x2": 30, "y2": 25},
+    {"x1": 55, "y1": 9,  "x2": 55, "y2": 25},
+
+    {"x1": 0,  "y1": 25, "x2": 5,  "y2": 25},
+    {"x1": 55, "y1": 25, "x2": 60, "y2": 25}
+  ],
+  "rooms": [
+    {"id": "r1",  "name": "Çalışma Odası 1",   "type": "classroom", "polygon": [{"x":0,"y":0},{"x":10,"y":0},{"x":10,"y":7},{"x":0,"y":7}]},
+    {"id": "r2",  "name": "Çalışma Odası 2",   "type": "classroom", "polygon": [{"x":10,"y":0},{"x":25,"y":0},{"x":25,"y":7},{"x":10,"y":7}]},
+    {"id": "r3",  "name": "Çalışma Odası 3",   "type": "classroom", "polygon": [{"x":25,"y":0},{"x":40,"y":0},{"x":40,"y":7},{"x":25,"y":7}]},
+    {"id": "r4",  "name": "WC Erkek",          "type": "bathroom",  "polygon": [{"x":40,"y":0},{"x":50,"y":0},{"x":50,"y":7},{"x":40,"y":7}]},
+    {"id": "r5",  "name": "WC Kadın",          "type": "bathroom",  "polygon": [{"x":50,"y":0},{"x":60,"y":0},{"x":60,"y":7},{"x":50,"y":7}]},
+    {"id": "r6",  "name": "Koridor",           "type": "corridor",  "polygon": [{"x":0,"y":7},{"x":60,"y":7},{"x":60,"y":9},{"x":0,"y":9}]},
+    {"id": "r7",  "name": "Okuma Salonu",      "type": "classroom", "polygon": [{"x":0,"y":9},{"x":30,"y":9},{"x":30,"y":25},{"x":0,"y":25}]},
+    {"id": "r8",  "name": "Kitaplık (Raflar)", "type": "storage",   "polygon": [{"x":30,"y":9},{"x":55,"y":9},{"x":55,"y":25},{"x":30,"y":25}]},
+    {"id": "r9",  "name": "Personel Ofisi",    "type": "office",    "polygon": [{"x":55,"y":9},{"x":60,"y":9},{"x":60,"y":25},{"x":55,"y":25}]},
+    {"id": "r10", "name": "Giriş Holü",        "type": "corridor",  "polygon": [{"x":5,"y":25},{"x":55,"y":25},{"x":55,"y":30},{"x":5,"y":30}]},
+    {"id": "r11", "name": "Danışma Masası",    "type": "office",    "polygon": [{"x":27,"y":26},{"x":33,"y":26},{"x":33,"y":28},{"x":27,"y":28}]}
+  ],
+  "exits": [
+    {"id": "e1", "name": "Ana Giriş",     "type": "door",      "x": 30, "y": 30},
+    {"id": "e2", "name": "Acil Çıkış A",  "type": "emergency", "x": 0,  "y": 17},
+    {"id": "e3", "name": "Acil Çıkış B",  "type": "emergency", "x": 60, "y": 17},
+    {"id": "e4", "name": "Merdiven A",    "type": "staircase", "x": 3,  "y": 27},
+    {"id": "e5", "name": "Merdiven B",    "type": "staircase", "x": 57, "y": 27}
+  ],
+  "waypoints": [
+    {"id": "w1",  "x": 5,  "y": 8,  "connections": ["w2", "we2", "wr1"]},
+    {"id": "w2",  "x": 17, "y": 8,  "connections": ["w1", "w3", "w7", "wr2"]},
+    {"id": "w3",  "x": 32, "y": 8,  "connections": ["w2", "w4", "w8", "wr3"]},
+    {"id": "w4",  "x": 45, "y": 8,  "connections": ["w3", "w5", "w8", "wr4"]},
+    {"id": "w5",  "x": 55, "y": 8,  "connections": ["w4", "we3", "wr5"]},
+    {"id": "w7",  "x": 15, "y": 17, "connections": ["w2", "w8", "w9"]},
+    {"id": "w8",  "x": 42, "y": 17, "connections": ["w3", "w4", "w7", "w9"]},
+    {"id": "w9",  "x": 30, "y": 27, "connections": ["w7", "w8", "w10", "w11", "we1"]},
+    {"id": "w10", "x": 8,  "y": 27, "connections": ["w9", "wm1"]},
+    {"id": "w11", "x": 52, "y": 27, "connections": ["w9", "wm2"]},
+
+    {"id": "wr1", "x": 5,  "y": 7,  "connections": ["w1"]},
+    {"id": "wr2", "x": 17, "y": 7,  "connections": ["w2"]},
+    {"id": "wr3", "x": 32, "y": 7,  "connections": ["w3"]},
+    {"id": "wr4", "x": 45, "y": 7,  "connections": ["w4"]},
+    {"id": "wr5", "x": 55, "y": 7,  "connections": ["w5"]},
+
+    {"id": "we1", "x": 30, "y": 29, "connections": ["w9"]},
+    {"id": "we2", "x": 1,  "y": 17, "connections": ["w1", "w7"]},
+    {"id": "we3", "x": 59, "y": 17, "connections": ["w5", "w8"]},
+    {"id": "wm1", "x": 3,  "y": 28, "connections": ["w10"]},
+    {"id": "wm2", "x": 57, "y": 28, "connections": ["w11"]}
+  ]
+}

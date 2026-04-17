@@ -37,6 +37,88 @@ router.get("/", async (req: AuthRequest, res: Response) => {
 });
 
 /**
+ * Haversine great-circle distance in meters between two lat/lng pairs.
+ */
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6_371_000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/**
+ * GET /api/buildings/nearest?lat=XX&lng=YY&radius=500
+ * Find the closest building within `radius` meters (default 500) of the
+ * given GPS coordinates. Returns the building plus all its floors, or
+ * `no_building_nearby` if nothing is in range.
+ */
+router.get("/nearest", async (req: AuthRequest, res: Response) => {
+  try {
+    const lat = parseFloat(req.query.lat as string);
+    const lng = parseFloat(req.query.lng as string);
+    const radius = req.query.radius ? parseFloat(req.query.radius as string) : 500;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      res.status(400).json({ success: false, error: "lat and lng query parameters are required" });
+      return;
+    }
+
+    const buildingsResult = await query(
+      `SELECT id, university_id, name, address,
+              lat  AS latitude,
+              lng  AS longitude,
+              floors_count AS "totalFloors"
+       FROM buildings
+       WHERE lat IS NOT NULL AND lng IS NOT NULL`
+    );
+
+    let nearest: (typeof buildingsResult.rows[number] & { distance: number }) | null = null;
+    for (const b of buildingsResult.rows) {
+      const d = haversine(lat, lng, Number(b.latitude), Number(b.longitude));
+      if (nearest === null || d < nearest.distance) {
+        nearest = { ...b, distance: d };
+      }
+    }
+
+    if (!nearest || nearest.distance > radius) {
+      res.json({
+        success: true,
+        data: null,
+        reason: "no_building_nearby",
+        nearestDistance: nearest?.distance ?? null,
+      });
+      return;
+    }
+
+    const floorsResult = await query(
+      `SELECT id,
+              building_id    AS "buildingId",
+              floor_number   AS "floorNumber",
+              floor_name     AS name,
+              plan_image_url AS "planUrl",
+              plan_json      AS "planJson"
+       FROM floors WHERE building_id = $1 ORDER BY floor_number`,
+      [nearest.id]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        ...nearest,
+        floors: floorsResult.rows,
+      },
+    });
+  } catch (err) {
+    console.error("[buildings] nearest error:", err);
+    res.status(500).json({ success: false, error: "Failed to find nearest building" });
+  }
+});
+
+/**
  * GET /api/buildings/:id
  * Get a single building by ID, including its floors.
  */
