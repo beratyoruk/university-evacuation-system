@@ -18,6 +18,7 @@ import { floorsApi, type Floor } from "../../api/floors.api";
 import { locationService } from "../../services/locationService";
 import { routeService } from "../../services/routeService";
 import { floorDetection } from "../../services/floorDetection";
+import { computePlanBounds } from "../../utils/planBounds";
 import type { ExitMarker, UserPosition } from "../../components/FloorViewer/FloorViewer";
 
 const WS_URL = import.meta.env.VITE_WS_URL || "http://localhost:3001";
@@ -55,6 +56,21 @@ export default function EvacuationView() {
   const setEvacuationRoute = useAppStore((s) => s.setEvacuationRoute);
 
   const { planData, loading: planLoading } = useFloorPlan(currentFloor?.id ?? null);
+
+  // Prefer floor's declared dimensions; fall back to derived plan bounds.
+  const floorDims = useMemo(() => {
+    const fallback = { width: 60, height: 30 };
+    const declaredW = currentFloor?.width;
+    const declaredH = currentFloor?.height;
+    if (Number.isFinite(declaredW) && declaredW! > 0 && Number.isFinite(declaredH) && declaredH! > 0) {
+      return { width: declaredW!, height: declaredH! };
+    }
+    const bounds = computePlanBounds(planData);
+    if (bounds.width > 0 && bounds.height > 0) {
+      return { width: bounds.width, height: bounds.height };
+    }
+    return fallback;
+  }, [currentFloor?.width, currentFloor?.height, planData]);
 
   const {
     gpsStatus,
@@ -188,13 +204,14 @@ export default function EvacuationView() {
     };
   }, [floors, setCurrentFloor]);
 
-  // ─── Location tracking ───
+  // ─── Location tracking (config + subscribe) ───
   useEffect(() => {
     if (!building || !currentFloor) return;
 
     locationService.start(
       { latitude: building.latitude, longitude: building.longitude, rotation: 0 },
-      currentFloor.id
+      currentFloor.id,
+      floorDims
     );
 
     const unsub = locationService.onUpdate((sample) => {
@@ -204,6 +221,8 @@ export default function EvacuationView() {
         floorId: sample.floorId,
         accuracy: sample.accuracy,
         timestamp: sample.timestamp,
+        heading: sample.heading,
+        speed: sample.speed,
       });
     });
 
@@ -211,7 +230,21 @@ export default function EvacuationView() {
       unsub();
       locationService.stop();
     };
-  }, [building, currentFloor, setUserLocation]);
+  }, [building, currentFloor, floorDims, setUserLocation]);
+
+  // Feed GPS samples from the single upstream watcher (useNearestBuilding)
+  // into locationService — no duplicate geolocation watchers.
+  useEffect(() => {
+    if (!geoState || !building || !currentFloor) return;
+    locationService.ingestGps(
+      geoState.lat,
+      geoState.lng,
+      geoState.accuracy,
+      geoState.timestamp,
+      geoState.heading,
+      geoState.speed
+    );
+  }, [geoState, building, currentFloor]);
 
   // ─── Route subscription ───
   useEffect(() => {
@@ -527,17 +560,21 @@ export default function EvacuationView() {
                   route={evacuationRoute}
                   userPosition={userPos}
                   emergencyMode={emergencyMode}
-                  width={currentFloor.width}
-                  height={currentFloor.height}
+                  width={floorDims.width}
+                  height={floorDims.height}
+                  accuracy={userLocation?.accuracy ?? null}
+                  heading={userLocation?.heading ?? null}
                 />
               ) : (
                 <Map2DView
                   planData={planData}
                   route={evacuationRoute}
                   userPosition={userPos}
-                  width={currentFloor.width}
-                  height={currentFloor.height}
+                  width={floorDims.width}
+                  height={floorDims.height}
                   emergencyMode={emergencyMode}
+                  accuracy={userLocation?.accuracy ?? null}
+                  heading={userLocation?.heading ?? null}
                 />
               )}
             </Suspense>
@@ -654,6 +691,12 @@ export default function EvacuationView() {
 }
 
 function GpsIndicator({ geoState, gpsStatus }: { geoState: GeoState | null; gpsStatus: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   if (!geoState && gpsStatus !== "active") {
     return (
       <div className="absolute left-3 top-3 z-20 rounded-lg bg-gray-900/80 px-3 py-1.5 text-xs text-gray-500 backdrop-blur-sm">
@@ -663,15 +706,26 @@ function GpsIndicator({ geoState, gpsStatus }: { geoState: GeoState | null; gpsS
   }
   if (!geoState) return null;
 
+  const ageSec = Math.max(0, Math.round((now - geoState.timestamp) / 1000));
+  const stale = ageSec > 5;
+  const dotClass = stale ? "bg-amber-400" : "bg-emerald-400 animate-pulse";
+  const ageLabel = ageSec < 2 ? "az önce" : `${ageSec}sn önce`;
+
   return (
     <div className="absolute left-3 top-3 z-20 flex items-center gap-2 rounded-lg bg-gray-900/80 px-3 py-1.5 backdrop-blur-sm">
-      <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+      <span className={`h-2 w-2 rounded-full ${dotClass}`} />
       <span className="text-xs tabular-nums text-gray-300">
-        {geoState.lat.toFixed(4)}, {geoState.lng.toFixed(4)}
+        {geoState.lat.toFixed(5)}, {geoState.lng.toFixed(5)}
       </span>
-      <span className="text-xs text-gray-500">
-        ±{Math.round(geoState.accuracy)}m
+      <span className="text-xs text-gray-500">±{Math.round(geoState.accuracy)}m</span>
+      <span className={`text-xs tabular-nums ${stale ? "text-amber-300" : "text-gray-500"}`}>
+        {ageLabel}
       </span>
+      {geoState.speed != null && geoState.speed > 0.3 && (
+        <span className="text-xs tabular-nums text-emerald-300">
+          {geoState.speed.toFixed(1)} m/s
+        </span>
+      )}
     </div>
   );
 }

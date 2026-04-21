@@ -8,6 +8,7 @@ import { useLocation } from "../hooks/useLocation";
 import { useRoute } from "../hooks/useRoute";
 import FloorViewer from "../components/FloorViewer/FloorViewer";
 import FloorSelector from "../components/FloorViewer/FloorSelector";
+import { computePlanBounds } from "../utils/planBounds";
 import type { BuildingOrigin } from "../utils/coordinates";
 
 interface Building {
@@ -102,8 +103,20 @@ export default function BuildingViewPage() {
     ? { latitude: building.latitude, longitude: building.longitude, rotation: 0 }
     : null;
 
+  // Effective floor dimensions (fall back to plan bounds when missing)
+  const floorDims = (() => {
+    const w = currentFloor?.width;
+    const h = currentFloor?.height;
+    if (Number.isFinite(w) && w! > 0 && Number.isFinite(h) && h! > 0) {
+      return { width: w!, height: h! };
+    }
+    const b = computePlanBounds(planData);
+    if (b.width > 0 && b.height > 0) return { width: b.width, height: b.height };
+    return { width: 60, height: 30 };
+  })();
+
   // Location tracking
-  useLocation(buildingOrigin, currentFloor?.id ?? null);
+  useLocation(buildingOrigin, currentFloor?.id ?? null, floorDims);
 
   // Route calculation
   useRoute(building?.id ?? null);
@@ -191,8 +204,8 @@ export default function BuildingViewPage() {
                 route={evacuationRoute}
                 userPosition={userPos}
                 emergencyMode={emergencyMode}
-                width={currentFloor.width}
-                height={currentFloor.height}
+                width={floorDims.width}
+                height={floorDims.height}
               />
             </>
           ) : (
@@ -207,7 +220,7 @@ export default function BuildingViewPage() {
       <div className="flex items-center justify-between border-t border-gray-700 bg-gray-800/50 px-6 py-2 text-xs text-gray-400">
         <span>
           {currentFloor
-            ? `${currentFloor.name} - ${currentFloor.width}m x ${currentFloor.height}m`
+            ? `${currentFloor.name} - ${floorDims.width.toFixed(0)}m x ${floorDims.height.toFixed(0)}m`
             : "No floor selected"}
         </span>
         <div className="flex items-center gap-4">

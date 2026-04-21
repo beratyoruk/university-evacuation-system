@@ -5,6 +5,8 @@ interface UserLocation extends UserPosition {
   floorId: string;
   accuracy: number;
   timestamp: number;
+  heading?: number | null;
+  speed?: number | null;
 }
 
 interface FloorInfo {

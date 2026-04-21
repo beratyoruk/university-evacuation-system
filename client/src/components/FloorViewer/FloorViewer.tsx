@@ -54,6 +54,10 @@ interface FloorViewerProps {
   emergencyMode: boolean;
   width?: number;
   height?: number;
+  /** GPS accuracy in meters — rendered as a translucent disc on the ground */
+  accuracy?: number | null;
+  /** Compass heading 0..360 (degrees clockwise from plan-north) */
+  heading?: number | null;
 }
 
 // ─── Constants ───
@@ -352,6 +356,8 @@ function FloorViewer({
   emergencyMode,
   width = 50,
   height = 50,
+  accuracy = null,
+  heading = null,
 }: FloorViewerProps) {
   return (
     <div className="h-full w-full">
@@ -399,7 +405,12 @@ function FloorViewer({
 
         {/* User position marker */}
         {userPosition && (
-          <UserMarker x={userPosition.x} y={userPosition.y} />
+          <UserMarker
+            x={userPosition.x}
+            y={userPosition.y}
+            accuracy={accuracy}
+            heading={heading}
+          />
         )}
 
         {/* Evacuation route */}

@@ -6,6 +6,8 @@ export interface GeoState {
   lng: number;
   accuracy: number;
   timestamp: number;
+  heading: number | null;
+  speed: number | null;
 }
 
 export type GpsStatus = "waiting" | "active" | "denied" | "unavailable" | "timeout";
@@ -25,6 +27,19 @@ export interface NearestBuildingResult {
 }
 
 const NEARBY_THRESHOLD = 50;
+/** Don't refetch /nearest unless user moved at least this far since last fetch. */
+const REFETCH_DISTANCE_M = 25;
+
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6_371_000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
 
 interface UseNearestBuildingOptions {
   overrideLat?: number;
@@ -39,7 +54,7 @@ export function useNearestBuilding(opts?: UseNearestBuildingOptions): NearestBui
   const [gpsStatus, setGpsStatus] = useState<GpsStatus>(hasOverride ? "active" : "waiting");
   const [geoState, setGeoState] = useState<GeoState | null>(
     hasOverride
-      ? { lat: opts!.overrideLat!, lng: opts!.overrideLng!, accuracy: 1, timestamp: Date.now() }
+      ? { lat: opts!.overrideLat!, lng: opts!.overrideLng!, accuracy: 1, timestamp: Date.now(), heading: null, speed: null }
       : null
   );
   const [building, setBuilding] = useState<NearestBuildingResult["building"]>(null);
@@ -47,13 +62,13 @@ export function useNearestBuilding(opts?: UseNearestBuildingOptions): NearestBui
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
-  const lastFetchRef = useRef<string>("");
+  const lastFetchAnchorRef = useRef<{ lat: number; lng: number } | null>(null);
   const retryCounterRef = useRef(0);
 
   const setSimulatedPosition = useCallback((lat: number, lng: number) => {
     setGpsStatus("active");
-    setGeoState({ lat, lng, accuracy: 1, timestamp: Date.now() });
-    lastFetchRef.current = "";
+    setGeoState({ lat, lng, accuracy: 1, timestamp: Date.now(), heading: null, speed: null });
+    lastFetchAnchorRef.current = null;
   }, []);
 
   const startWatch = useCallback(() => {
@@ -82,6 +97,8 @@ export function useNearestBuilding(opts?: UseNearestBuildingOptions): NearestBui
           lng: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
           timestamp: pos.timestamp,
+          heading: Number.isFinite(pos.coords.heading) ? pos.coords.heading : null,
+          speed: Number.isFinite(pos.coords.speed) ? pos.coords.speed : null,
         });
       },
       (err) => {
@@ -118,9 +135,15 @@ export function useNearestBuilding(opts?: UseNearestBuildingOptions): NearestBui
   useEffect(() => {
     if (!geoState) return;
 
-    const key = `${geoState.lat.toFixed(5)},${geoState.lng.toFixed(5)}`;
-    if (key === lastFetchRef.current) return;
-    lastFetchRef.current = key;
+    // Skip refetch if we've already resolved a building and the user hasn't
+    // moved meaningfully since the last fetch — prevents one /nearest call
+    // per GPS sample during movement.
+    const anchor = lastFetchAnchorRef.current;
+    if (anchor) {
+      const moved = haversineMeters(anchor.lat, anchor.lng, geoState.lat, geoState.lng);
+      if (moved < REFETCH_DISTANCE_M) return;
+    }
+    lastFetchAnchorRef.current = { lat: geoState.lat, lng: geoState.lng };
 
     let cancelled = false;
 
@@ -164,7 +187,7 @@ export function useNearestBuilding(opts?: UseNearestBuildingOptions): NearestBui
 
   const retry = useCallback(() => {
     retryCounterRef.current += 1;
-    lastFetchRef.current = "";
+    lastFetchAnchorRef.current = null;
     startWatch();
   }, [startWatch]);
 
